@@ -43,7 +43,7 @@
   <!-- رابط النظام (النشر الأساسي لنظام الحضور). لو اتغير النشر، غيّر الرابط ده بس -->
   <iframe id="app"
           title="PRO DAMAC"
-          src="https://script.google.com/macros/s/AKfycbywdC8tM7DjCXJhA-kkn8oNkem2QiVZOH-iuz24SSAStr2TcYJrx9buQTfu-dhNSKkD/exec"
+          src="https://script.google.com/macros/s/AKfycbywdC8tM7DjCXJhA-kkn8oNkem2QiVZOH-iuz24SSAStr2TcYJrx9buQTfu-dhNSKkD/exec?app=1"
           allow="geolocation *; camera *; microphone *; clipboard-read *; clipboard-write *; fullscreen *"
           referrerpolicy="no-referrer-when-downgrade"></iframe>
 
@@ -59,7 +59,7 @@
 
   <script>
     const app = document.getElementById('app'), splash = document.getElementById('splash');
-    document.getElementById('direct').href = app.src;
+    document.getElementById('direct').href = app.src.replace(/\?app=1$/, '');
 
     /* شاشة البداية تختفي أول ما النظام يفتح، ولو اتأخر نعرض رابط فتحه مباشرة */
     const slowT = setTimeout(() => document.getElementById('slow').classList.add('show'), 15000);
