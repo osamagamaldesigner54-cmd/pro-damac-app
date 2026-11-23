@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>PRO DAMAC</title>
+  <meta name="theme-color" content="#7A1A28">
+  <meta name="description" content="نظام الحضور والانصراف والعقود والصيانة — PRO DAMAC">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="PRO DAMAC">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    html, body { margin: 0; height: 100%; background: #F5F5F7; font-family: system-ui, "Segoe UI", Tahoma, sans-serif; }
+    #app { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+    #splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #F5F5F7; color: #7A1A28; transition: opacity .3s; }
+    #splash img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 8px 24px rgba(122,26,40,.25); }
+    #splash.gone { opacity: 0; pointer-events: none; }
+    .spin { width: 26px; height: 26px; border: 3px solid rgba(122,26,40,.2); border-top-color: #7A1A28; border-radius: 50%; animation: s 1s linear infinite; }
+    @keyframes s { to { transform: rotate(360deg); } }
+    .bar { position: fixed; inset-inline: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); margin: auto; max-width: 460px; display: none; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: #2b2b2b; color: #fff; font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.3); z-index: 10; }
+    .bar.show { display: flex; }
+    .bar button, .bar a { margin-inline-start: auto; background: #7A1A28; color: #fff; border: 0; border-radius: 10px; padding: 8px 14px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; white-space: nowrap; }
+    .bar .x { margin: 0; background: transparent; padding: 4px 8px; }
+    #off { background: #b42318; }
+    /* كارت التثبيت (زي "ثبّت رفيق على جهازك") */
+    .inst { position: fixed; inset-inline: 12px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: auto; max-width: 480px; display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: #fff; border-radius: 20px; box-shadow: 0 12px 36px rgba(0,0,0,.18); z-index: 20; transform: translateY(140%); opacity: 0; transition: transform .35s ease, opacity .35s ease; }
+    .inst.show { transform: none; opacity: 1; }
+    .inst .ic { width: 52px; height: 52px; border-radius: 14px; flex: none; }
+    .inst .tx { flex: 1; min-width: 0; }
+    .inst .tx b { display: block; font-size: 17px; color: #1d1d1f; margin-bottom: 4px; }
+    .inst .tx span { display: block; font-size: 13.5px; line-height: 1.6; color: #6e6e73; }
+    .inst .bt { display: flex; flex-direction: column; gap: 8px; flex: none; }
+    .inst .bt button { min-width: 84px; padding: 10px 14px; border-radius: 12px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .inst .go { background: #7A1A28; color: #fff; border: 0; }
+    .inst .later { background: #fff; color: #6e6e73; border: 1px solid #d2d2d7; font-weight: 500; }
+    .inst .ios { display: inline-block; vertical-align: -3px; width: 16px; height: 16px; }
+  </style>
+</head>
+<body>
+  <!-- رابط النظام (النشر الأساسي لنظام الحضور). لو اتغير النشر، غيّر الرابط ده بس -->
+  <iframe id="app"
+          title="PRO DAMAC"
+          src="https://script.google.com/macros/s/AKfycbywdC8tM7DjCXJhA-kkn8oNkem2QiVZOH-iuz24SSAStr2TcYJrx9buQTfu-dhNSKkD/exec"
+          allow="geolocation *; camera *; microphone *; clipboard-read *; clipboard-write *; fullscreen *"
+          referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+  <div id="splash"><img src="icons/icon-192.png" alt=""><b>PRO DAMAC</b><div class="spin"></div></div>
+
+  <div class="inst" id="install" role="dialog" aria-label="تثبيت التطبيق">
+    <img class="ic" src="icons/icon-192.png" alt="">
+    <div class="tx"><b>ثبّت برو دماك على جهازك</b><span id="instMsg">يفتح كتطبيق من الشاشة الرئيسية، أسرع وبلا شريط المتصفح.</span></div>
+    <div class="bt"><button class="go" id="installBtn" type="button">تثبيت</button><button class="later" id="installX" type="button">لاحقاً</button></div>
+  </div>
+  <div class="bar" id="slow"><span>النظام بياخد وقت في الفتح…</span><a id="direct" target="_blank" rel="noopener">افتحه مباشرة</a></div>
+  <div class="bar" id="off"><span>لا يوجد اتصال بالإنترنت</span></div>
+
+  <script>
+    const app = document.getElementById('app'), splash = document.getElementById('splash');
+    document.getElementById('direct').href = app.src;
+
+    /* شاشة البداية تختفي أول ما النظام يفتح، ولو اتأخر نعرض رابط فتحه مباشرة */
+    const slowT = setTimeout(() => document.getElementById('slow').classList.add('show'), 15000);
+    app.addEventListener('load', () => { clearTimeout(slowT); document.getElementById('slow').classList.remove('show'); splash.classList.add('gone'); });
+
+    /* شريط انقطاع الإنترنت */
+    const off = document.getElementById('off');
+    const net = () => off.classList.toggle('show', !navigator.onLine);
+    addEventListener('online', () => { net(); app.src = app.src; });
+    addEventListener('offline', net); net();
+
+    /* كارت التثبيت: Chrome / Edge (كمبيوتر وأندرويد) بزرار تثبيت مباشر، والآيفون/الآيباد بخطوات "إضافة للشاشة الرئيسية" */
+    const card = document.getElementById('install'), goBtn = document.getElementById('installBtn');
+    const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const LATER_DAYS = 7;   /* "لاحقاً" بيخفي الكارت أسبوع */
+    const snoozed = () => { try { return Date.now() < Number(localStorage.getItem('pd_install_later') || 0); } catch (_) { return false; } };
+    const show = () => { if (!standalone && !snoozed()) setTimeout(() => card.classList.add('show'), 2500); };
+    const hide = () => card.classList.remove('show');
+    let deferred = null;
+    addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; show(); });
+    if (ios && !standalone) {
+      document.getElementById('instMsg').innerHTML = 'اضغط زرار المشاركة <svg class="ios" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg> تحت، وبعدين «إضافة إلى الشاشة الرئيسية».';
+      goBtn.textContent = 'فهمت'; show();
+    }
+    goBtn.onclick = async () => {
+      hide();
+      if (!deferred) return;   /* آيفون: "فهمت" بتقفل الكارت بس */
+      deferred.prompt(); await deferred.userChoice; deferred = null;
+    };
+    document.getElementById('installX').onclick = () => { hide(); try { localStorage.setItem('pd_install_later', String(Date.now() + LATER_DAYS * 864e5)); } catch (_) {} };
+    addEventListener('appinstalled', hide);
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  </script>
+</body>
+</html>
