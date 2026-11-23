@@ -1,24 +1,7 @@
-/* Service worker بسيط: بيحفظ ملفات الغلاف بس (الصفحة والأيقونات) عشان التطبيق يفتح بسرعة ويتثبت.
-   أي بيانات من النظام نفسه مش بتتحفظ هنا — كلها بتيجي مباشرة من Google Apps Script. */
-const CACHE = 'pd-shell-v2';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
-
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
-});
-
+/* Service worker خفيف: موجود عشان التطبيق يتثبت بس، ومن غير fetch handler
+   عشان المتصفح ميشغّلوش مع كل فتحة (كان بياخد حوالي 1.5 ثانية قبل ما الصفحة تبدأ).
+   كل الملفات بتيجي من GitHub Pages مباشرة، والنظام نفسه من Google Apps Script. */
+self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-    .then(() => self.clients.claim()));
-});
-
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.origin !== self.location.origin) return; /* النظام نفسه: مايتلمسش */
-  e.respondWith(
-    fetch(e.request)
-      .then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; })
-      .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
-  );
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => self.clients.claim()));   /* مسح الكاش القديم */
 });
